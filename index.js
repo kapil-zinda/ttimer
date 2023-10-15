@@ -73,7 +73,7 @@ function setTime() {
 		":" +
 		(seconds % 60).toString().padStart(2, "0");
 	timediv.innerText = timestr;
-	document.title = `${timestr} ${fullname[roundInfo.current]} - Tomodoro`;
+	document.title = `${timestr} ${fullname[roundInfo.current]} - Dtimer`;
 	progress.style.strokeDashoffset = (roundInfo.t / config[roundInfo.current]) * 100;
 	if (pipActive) loop();
 }
@@ -553,53 +553,6 @@ function focusEnd(t) {
 		});
 	}
 }
-
-document.getElementById("create-backup").addEventListener("click", () => {
-	let tr = db.transaction("records", "readonly").objectStore("records").index("task").getAll();
-	tr.onsuccess = () => {
-		let res = tr.result;
-		let blob = new Blob([JSON.stringify(res)], { type: "application/json" });
-		let url = URL.createObjectURL(blob);
-		let link = document.createElement("a");
-		link.href = url;
-		link.download = "tomodorobackup.json";
-		link.click();
-		setTimeout(() => URL.revokeObjectURL(url), 1000);
-	};
-});
-
-document.getElementById("backup-restore").addEventListener("change", function () {
-	let files = this.files;
-	if (files.length !== 0) {
-		let file = files[0];
-		file.text().then((res) => {
-			try {
-				let dbBackup = JSON.parse(res);
-				let rec = dbBackup.map((r) => {
-					if (!tasks.includes(r.n)) {
-						tasks.push(r.n);
-						createTaskEl(r.n);
-						if (!tasks.includes(selectedTask)) {
-							selectedTask = r.n;
-							taskSelect.value = r.n;
-						}
-					}
-					return { t: r.t, d: r.d, n: r.n };
-				});
-				saveTasks();
-				noTaskManager();
-				console.log(rec, tasks);
-				let tr = db.transaction("records", "readwrite");
-				tr.oncomplete = () => alert("Backup restored successfully!");
-				let objstore = tr.objectStore("records");
-				rec.forEach((r) => objstore.add(r));
-			} catch (error) {
-				console.log(error);
-				alert("An error occured! Make sure that you are restoring a valid backup file.");
-			}
-		});
-	}
-});
 
 let allCheckbox = document.getElementById("all");
 let pieCardContainer = document.getElementById("pie-card-container");
